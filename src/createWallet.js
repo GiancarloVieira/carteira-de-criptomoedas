@@ -1,35 +1,27 @@
 //Author: Giancarlo Vieira de Castro
+const bip39 = require('bip39');
+const bitcoin = require('bitcoinjs-lib');
+const BIP32Factory = require('bip32').default;
+const ecc = require('tiny-secp256k1');
 
-//importando as dependencias
-const bip32 = require('bip32')
-const bip39 = require('bip39')
-const bitcoin = require('bitcoinjs-lib')
+const bip32 = BIP32Factory(ecc);
 
-//definir a rede
-//bitcoin - rede principal - mainnet
-//testnet - rede de teste - tesnet
-const network = bitcoin.networks.testnet
+const network = bitcoin.networks.testnet; // Rede testnet
+const path = `m/84'/1'/0'/0/0`;
 
-//derivação de carteiras HD
-const path = `m/49'/1'/0'/0` 
+let mnemonic = bip39.generateMnemonic(); // Gerar uma frase mnemônica
+const seed = bip39.mnemonicToSeedSync(mnemonic); // Converter a mnemônica em uma seed
 
-//criando o mnemonic para a seed (palavras de senha)
-let mnemonic = bip39.generateMnemonic()
-const seed = bip39.mnemonicToSeedSync(mnemonic)
+let root = bip32.fromSeed(seed, network);
 
-//criando a raiz da cartiera HD
-let root = bip32.fromSeed(seed, network)
+let node = root.derivePath(path);
 
-//criando uma conta - par pvt-pub keys
-let account = root.derivePath(path)
-let node = account.derive(0).derive(0)
-
-let btcAddress = bitcoin.payments.p2pkh({
+let btcAddress = bitcoin.payments.p2wpkh({
     pubkey: node.publicKey,
-    network: network,
-}).address
+    network: network
+}).address;
 
-console.log("Carteira gerada")
-console.log("Endereço: ", btcAddress)
-console.log("Chave privada:", node.toWIF())
-console.log("Seed:", mnemonic)
+console.log("Carteira Gerada");
+console.log("Endereço: ", btcAddress);
+console.log("Chave Privada: ", node.toWIF());
+console.log("Seed: ", mnemonic);
